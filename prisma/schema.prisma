@@ -101,7 +101,8 @@ model Trend {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  scripts     Script[]
+  scripts           Script[]
+  scriptProviderLogs ScriptProviderLog[]
 
   @@index([category])
   @@index([region])
@@ -125,7 +126,8 @@ model Script {
   updatedAt    DateTime @updatedAt
 
   trend        Trend?   @relation(fields: [trendId], references: [id], onDelete: SetNull)
-  videos       Video[]
+  videos            Video[]
+  scriptProviderLogs ScriptProviderLog[]
 
   @@index([language])
   @@index([qualityScore])
@@ -156,6 +158,7 @@ model Video {
   script           Script?         @relation(fields: [scriptId], references: [id], onDelete: SetNull)
   score            VideoScore?
   moderationLogs   ModerationLog[]
+  providerJobLogs  ProviderJobLog[]
   feedEvents       FeedEvent[]
 
   @@index([status])
@@ -237,4 +240,65 @@ model AdCampaign {
   @@index([status])
   @@index([startsAt])
   @@index([endsAt])
+}
+
+enum ProviderJobType {
+  LLM_SCRIPT
+  TTS
+  AVATAR_VIDEO
+  VIDEO_COMPOSITE
+  MODERATION
+}
+
+enum ProviderJobStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  FALLBACK_USED
+}
+
+model ProviderJobLog {
+  id              String            @id
+  videoId         String?
+  jobType         ProviderJobType
+  providerName    String
+  status          ProviderJobStatus
+  requestPayload  Json?
+  responsePayload Json?
+  errorMessage    String?
+  fallbackUsed    Boolean           @default(false)
+  startedAt       DateTime          @default(now())
+  completedAt     DateTime?
+
+  video           Video?            @relation(fields: [videoId], references: [id], onDelete: SetNull)
+
+  @@index([jobType])
+  @@index([providerName])
+  @@index([status])
+  @@index([fallbackUsed])
+  @@index([startedAt])
+}
+
+model ScriptProviderLog {
+  id              String    @id
+  scriptId        String?
+  trendId         String?
+  providerName    String
+  status          String
+  fallbackUsed    Boolean   @default(false)
+  errorMessage    String?
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  requestPayload  Json?
+  responsePayload Json?
+
+  script          Script?   @relation(fields: [scriptId], references: [id], onDelete: SetNull)
+  trend           Trend?    @relation(fields: [trendId], references: [id], onDelete: SetNull)
+
+  @@index([providerName])
+  @@index([status])
+  @@index([fallbackUsed])
+  @@index([startedAt])
+  @@index([scriptId])
 }

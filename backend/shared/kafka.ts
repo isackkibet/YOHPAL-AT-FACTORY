@@ -16,21 +16,9 @@ export async function getKafkaProducer(): Promise<Producer> {
   return producer;
 }
 
-export async function publishEvent<TPayload>(
-  topic: string,
-  payload: TPayload,
-  key?: string
-): Promise<void> {
+export async function publishEvent<TPayload>(topic: string, payload: TPayload, key?: string): Promise<void> {
   const activeProducer = await getKafkaProducer();
-  await activeProducer.send({
-    topic,
-    messages: [
-      {
-        key,
-        value: JSON.stringify(payload),
-      },
-    ],
-  });
+  await activeProducer.send({ topic, messages: [{ key, value: JSON.stringify(payload) }] });
 }
 
 export async function createConsumer(
@@ -43,8 +31,6 @@ export async function createConsumer(
   for (const topic of topics) {
     await consumer.subscribe({ topic, fromBeginning: false });
   }
-  await consumer.run({
-    eachMessage: handler,
-  });
+  await consumer.run({ eachMessage: handler });
   return consumer;
 }

@@ -1,0 +1,12 @@
+export interface VideoCompositorProvider {
+  compose(input: {
+    audioUrl: string;
+    avatarUrl?: string;
+    visuals: string[];
+    style?: string;
+  }): Promise<{
+    videoUrl: string;
+    durationMs: number;
+    metadata: Record<string, unknown>;
+  }>;
+}

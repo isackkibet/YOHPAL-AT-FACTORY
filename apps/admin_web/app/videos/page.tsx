@@ -1,0 +1,76 @@
+import { apiGet, apiPost, ApiResponse } from '../../lib/api';
+
+type Video = {
+  id: string;
+  title: string;
+  category: string;
+  status: string;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  region?: string;
+  country?: string;
+  durationSeconds?: number;
+  renderMetadata?: {
+    ttsProvider?: string;
+    avatarProvider?: string;
+    renderProvider?: string;
+    fallbackUsed: boolean;
+    failureReason?: string;
+  };
+};
+
+async function getVideos() {
+  try {
+    const response = await apiGet<ApiResponse<Video[]>>('/render/videos?take=50');
+    return response.data || [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function VideosPage() {
+  const videos = await getVideos();
+
+  async function createPendingJobs() {
+    'use server';
+    await apiPost('/render/jobs/create-pending?take=20');
+  }
+
+  async function renderPendingVideos() {
+    'use server';
+    await apiPost('/render/videos/render-pending?take=20');
+  }
+
+  return (
+    <>
+      <section className="header">
+        <h1>Seed Video Library</h1>
+        <p>Create render jobs, inspect provider metadata, and review fallback status.</p>
+      </section>
+      <div className="actions">
+        <form action={createPendingJobs}><button type="submit">Create pending jobs</button></form>
+        <form action={renderPendingVideos}><button type="submit" className="secondary">Render pending videos</button></form>
+      </div>
+      <section className="card">
+        <table className="table">
+          <thead>
+            <tr><th>Title</th><th>Category</th><th>Status</th><th>TTS</th><th>Avatar</th><th>Render</th><th>Fallback</th></tr>
+          </thead>
+          <tbody>
+            {videos.map((video) => (
+              <tr key={video.id}>
+                <td>{video.title}</td>
+                <td><span className="badge">{video.category}</span></td>
+                <td>{video.status}</td>
+                <td>{video.renderMetadata?.ttsProvider || '-'}</td>
+                <td>{video.renderMetadata?.avatarProvider || '-'}</td>
+                <td>{video.renderMetadata?.renderProvider || '-'}</td>
+                <td>{video.renderMetadata?.fallbackUsed ? 'Yes' : 'No'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </>
+  );
+}

@@ -6,16 +6,9 @@ export type ApiResponse<TData> = {
 };
 
 export function ok<TData>(data: TData, meta?: Record<string, unknown>): ApiResponse<TData> {
-  return {
-    success: true,
-    data,
-    meta,
-  };
+  return { success: true, data, meta };
 }
 
 export function fail(error: string): ApiResponse<null> {
-  return {
-    success: false,
-    error,
-  };
+  return { success: false, error };
 }
